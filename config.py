@@ -9,7 +9,7 @@ class Config:
     # 添加 Google API Key
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     
-    MODEL_NAME = "gemini-2.5-flash"
+    MODEL_NAME = "gemini-2.5-flash-lite"
     TEMPERATURE = 0       
     
     _current_dir = os.path.dirname(os.path.abspath(__file__))

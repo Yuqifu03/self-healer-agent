@@ -11,18 +11,22 @@ from utils.logger import logger
 # Ensure environment variables are loaded from the .env file
 load_dotenv()
 
+# main.py
 def run_agent(task: str):
     """Initializes and executes the FileAgent-SelfHealer workflow."""
     
-    # 1. Prepare Initial State with full keys defined in state.py
-    # We pass the project root to the prompt template to set the system's persona
-    prompt_template = get_system_prompt(config.PROJECT_ROOT)
+    # 1. 获取包含所有战略原则的 Prompt 模板
+    prompt_template = get_system_prompt('./')
     
-    # Initialize state with default values matching AgentState
+    # 2. 关键修复：将模板渲染成具体的 SystemMessage
+    # 使用 .format_messages 转换成 LangChain 可识别的消息列表
+    full_messages = prompt_template.format_messages(messages=[
+        HumanMessage(content=f"Task: {task}")
+    ])
+    
+    # 3. 将包含 System Prompt 的消息流传入初始状态
     initial_state = {
-        "messages": [
-            HumanMessage(content=f"Task: {task}")
-        ],
+        "messages": full_messages,
         "current_file": "",
         "last_error": "",
         "iteration_count": 0,
@@ -32,17 +36,11 @@ def run_agent(task: str):
     logger.log_step("Initializing FileAgent-SelfHealer")
     print(f"Targeting Project: {config.PROJECT_ROOT}")
 
-    # 2. Execute the Graph
+    # 运行工作流
     try:
-        # The invoke method starts the LangGraph workflow
         final_state = app.invoke(initial_state)
-        
-        # 3. Final Summary Output
         logger.log_success("Workflow completed.")
-        final_response = final_state["messages"][-1].content
-        print(f"\n{'='*20} FINAL AGENT REPORT {'='*20}")
-        print(final_response)
-        
+        print(final_state["messages"][-1].content)
     except Exception as e:
         logger.log_error(f"Execution failed: {str(e)}")
 
