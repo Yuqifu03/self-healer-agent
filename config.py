@@ -6,7 +6,7 @@ load_dotenv()
 class Config:
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     
-    MODEL_NAME = "gemini-2.5-flash-lite"
+    MODEL_NAME = "gemini-2.5-flash"
     TEMPERATURE = 0       
     
     _current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -15,7 +15,7 @@ class Config:
         os.path.join(_current_dir, "sandbox/example_project")
     )
 
-    MAX_ITERATIONS = 8
+    MAX_ITERATIONS = 10
     
     LOG_DIR = "logs"
 

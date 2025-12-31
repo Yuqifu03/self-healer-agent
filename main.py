@@ -12,32 +12,27 @@ from utils.logger import logger
 load_dotenv()
 
 # main.py
+
 def run_agent(task: str):
     """Initializes and executes the FileAgent-SelfHealer workflow."""
-    prompt_template = get_system_prompt('./')
-    
-    full_messages = prompt_template.format_messages(messages=[
-        HumanMessage(content=f"Task: {task}")
-    ])
-
     initial_state = {
-        "messages": full_messages,
-        "current_file": "",
-        "last_error": "",
+        "messages": [
+            HumanMessage(content=f"Task: {task}")
+        ],
         "iteration_count": 0,
-        "is_fixed": False
+        "phase": "analyze_error",
     }
 
     logger.log_step("Initializing FileAgent-SelfHealer")
     print(f"Targeting Project: {config.PROJECT_ROOT}")
 
-    #langgraph workflow
     try:
         final_state = app.invoke(initial_state)
         logger.log_success("Workflow completed.")
         print(final_state["messages"][-1].content)
     except Exception as e:
         logger.log_error(f"Execution failed: {str(e)}")
+
 
 if __name__ == "__main__":
     demo_task = "Explore the project directory, find the main entry point, run it, and fix any errors you encounter."
