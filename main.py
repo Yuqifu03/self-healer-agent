@@ -14,7 +14,7 @@ load_dotenv()
 # main.py
 
 def run_agent(task: str):
-    """Initializes and executes the FileAgent-SelfHealer workflow."""
+    """Initializes and executes the AutofixAgent workflow."""
     initial_state = {
         "messages": [
             HumanMessage(content=f"Task: {task}")
@@ -23,7 +23,7 @@ def run_agent(task: str):
         "phase": "analyze_error",
     }
 
-    logger.log_step("Initializing FileAgent-SelfHealer")
+    logger.log_step("Initializing AutofixAgent")
     print(f"Targeting Project: {config.PROJECT_ROOT}")
 
     try:

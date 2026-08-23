@@ -14,7 +14,7 @@ class AgentLogger:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.log_file = os.path.join(log_dir, f"agent_trace_{timestamp}.log")
         
-        self.logger = logging.getLogger("FileAgent")
+        self.logger = logging.getLogger("AutofixAgent")
         self.logger.setLevel(logging.INFO)
         
         file_handler = logging.FileHandler(self.log_file, encoding='utf-8')

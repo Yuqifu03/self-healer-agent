@@ -1,5 +1,6 @@
 from typing import Literal
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
 
@@ -105,10 +106,24 @@ def route_logic(state: AgentState) -> Literal["tools", "agent", "end"]:
 
     return "agent"
 
+tool_node = ToolNode(tools)
+
+def run_tools(state: AgentState, config: RunnableConfig | None = None):
+    """Execute tool calls and record every observation for full-chain tracing.
+
+    This mirrors LangGraph's built-in ToolNode but additionally streams each
+    tool result through the logger, closing the thought -> action -> observation
+    loop in both the console trace and the on-disk log file.
+    """
+    result = tool_node.invoke(state, config=config)
+    for message in result.get("messages", []):
+        logger.log_observation(message.content)
+    return result
+
 workflow = StateGraph(AgentState)
 
 workflow.add_node("agent", call_model)
-workflow.add_node("tools", ToolNode(tools))
+workflow.add_node("tools", run_tools)
 
 workflow.set_entry_point("agent")
 

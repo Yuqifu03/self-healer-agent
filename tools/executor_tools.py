@@ -1,21 +1,17 @@
 import subprocess
 import os
 import sys
-from typing import List, Optional
+from typing import List
 from langchain_core.tools import tool
 
 from config import config
-import os
-BASE_DIR = os.path.abspath(config.PROJECT_ROOT)
+from utils.sandbox import check_path as _check_path_impl, resolve_sandbox_root
 
-def _check_path(path: str):
-    joined_path = os.path.join(BASE_DIR, path)
-    full_path = os.path.abspath(joined_path)
+BASE_DIR = resolve_sandbox_root(config.PROJECT_ROOT)
 
-    if not full_path.startswith(BASE_DIR):
-        raise PermissionError(f"Access denied: {path} is outside the allowed sandbox: {BASE_DIR}")
-    
-    return full_path
+def _check_path(path: str) -> str:
+    """Resolve a path relative to the sandbox root, rejecting escapes."""
+    return _check_path_impl(BASE_DIR, path)
 
 @tool
 def run_python_script(script_path: str, script_args: List[str] = None) -> str:
@@ -42,7 +38,7 @@ def run_python_script(script_path: str, script_args: List[str] = None) -> str:
             cmd,
             capture_output=True,
             text=True,
-            timeout=30,
+            timeout=config.EXEC_TIMEOUT,
             cwd=BASE_DIR
         )
 
@@ -59,6 +55,9 @@ def run_python_script(script_path: str, script_args: List[str] = None) -> str:
         return "\n".join(output)
 
     except subprocess.TimeoutExpired:
-        return "Error: Script execution timed out (limit: 30s)."
+        return (
+            f"Error: Script execution timed out "
+            f"(limit: {config.EXEC_TIMEOUT}s)."
+        )
     except Exception as e:
         return f"Error during execution: {str(e)}"

@@ -1,19 +1,14 @@
 import os
 import subprocess
-from typing import Optional
 
 from config import config
-import os
-BASE_DIR = os.path.abspath(config.PROJECT_ROOT)
+from utils.sandbox import check_path as _check_path_impl, resolve_sandbox_root
 
-def _check_path(path: str):
-    joined_path = os.path.join(BASE_DIR, path)
-    full_path = os.path.abspath(joined_path)
+BASE_DIR = resolve_sandbox_root(config.PROJECT_ROOT)
 
-    if not full_path.startswith(BASE_DIR):
-        raise PermissionError(f"Access denied: {path} is outside the allowed sandbox: {BASE_DIR}")
-    
-    return full_path
+def _check_path(path: str) -> str:
+    """Resolve a path relative to the sandbox root, rejecting escapes."""
+    return _check_path_impl(BASE_DIR, path)
 
 def list_files(path: str = ".", recursive: bool = False) -> str:
     """List files in the specified directory. Set recursive=True to see all subdirectories."""

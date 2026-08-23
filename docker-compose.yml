@@ -1,0 +1,9 @@
+services:
+  self-healer:
+    build: .
+    env_file: .env
+    environment:
+      PROJECT_ROOT: /app/sandbox/buggy_project
+    volumes:
+      - ./sandbox:/app/sandbox
+      - ./logs:/app/logs

@@ -1,19 +1,14 @@
 import os
 import re
-from typing import Optional
 
 from config import config
-import os
-BASE_DIR = os.path.abspath(config.PROJECT_ROOT)
+from utils.sandbox import check_path as _check_path_impl, resolve_sandbox_root
 
-def _check_path(path: str):
-    joined_path = os.path.join(BASE_DIR, path)
-    full_path = os.path.abspath(joined_path)
+BASE_DIR = resolve_sandbox_root(config.PROJECT_ROOT)
 
-    if not full_path.startswith(BASE_DIR):
-        raise PermissionError(f"Access denied: {path} is outside the allowed sandbox: {BASE_DIR}")
-    
-    return full_path
+def _check_path(path: str) -> str:
+    """Resolve a path relative to the sandbox root, rejecting escapes."""
+    return _check_path_impl(BASE_DIR, path)
 
 def write_file(path: str, content: str) -> str:
     """Write or overwrite a file with new content. Use this to create new files or fully rewrite existing ones."""
@@ -29,7 +24,7 @@ def write_file(path: str, content: str) -> str:
         return f"Error writing file: {str(e)}"
 
 def patch_file(path: str, pattern: str, replacement: str, count: int = 1) -> str:
-    """Replaces exact literal text patterns within a file.
+    r"""Replaces exact literal text patterns within a file.
     
     IMPORTANT FOR THE AGENT:
     1. EXACT MATCHING: The 'pattern' must EXACTLY match the text in the file, including leading spaces (indentation), 
