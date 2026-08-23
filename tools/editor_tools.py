@@ -4,11 +4,9 @@ import re
 from config import config
 from utils.sandbox import check_path as _check_path_impl, resolve_sandbox_root
 
-BASE_DIR = resolve_sandbox_root(config.PROJECT_ROOT)
-
 def _check_path(path: str) -> str:
     """Resolve a path relative to the sandbox root, rejecting escapes."""
-    return _check_path_impl(BASE_DIR, path)
+    return _check_path_impl(resolve_sandbox_root(config.PROJECT_ROOT), path)
 
 def write_file(path: str, content: str) -> str:
     """Write or overwrite a file with new content. Use this to create new files or fully rewrite existing ones."""

@@ -19,3 +19,4 @@ class AgentState(TypedDict):
     iteration_count: int
     is_fixed: bool
     phase: AgentPhase
+    trace: list

@@ -1,0 +1,7 @@
+{
+  "id": "off_by_one_logic",
+  "name": "Off-by-one filter",
+  "bug_type": "logic_error",
+  "description": "Filters out the last item with a strict less-than; exits 0, so only output verification catches it.",
+  "expected_output": "count: 4"
+}

@@ -7,11 +7,9 @@ from langchain_core.tools import tool
 from config import config
 from utils.sandbox import check_path as _check_path_impl, resolve_sandbox_root
 
-BASE_DIR = resolve_sandbox_root(config.PROJECT_ROOT)
-
 def _check_path(path: str) -> str:
     """Resolve a path relative to the sandbox root, rejecting escapes."""
-    return _check_path_impl(BASE_DIR, path)
+    return _check_path_impl(resolve_sandbox_root(config.PROJECT_ROOT), path)
 
 @tool
 def run_python_script(script_path: str, script_args: List[str] = None) -> str:
@@ -39,7 +37,7 @@ def run_python_script(script_path: str, script_args: List[str] = None) -> str:
             capture_output=True,
             text=True,
             timeout=config.EXEC_TIMEOUT,
-            cwd=BASE_DIR
+            cwd=resolve_sandbox_root(config.PROJECT_ROOT)
         )
 
         output = []

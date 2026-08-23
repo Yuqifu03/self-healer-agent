@@ -1,0 +1,7 @@
+{
+  "id": "syntax_error",
+  "name": "Missing colon (SyntaxError)",
+  "bug_type": "syntax_error",
+  "description": "Function definition is missing its trailing colon.",
+  "expected_output": "hello world"
+}

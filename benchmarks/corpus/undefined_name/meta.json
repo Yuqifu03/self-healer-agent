@@ -1,0 +1,7 @@
+{
+  "id": "undefined_name",
+  "name": "NameError (typo)",
+  "bug_type": "runtime_error",
+  "description": "Variable name reslut is a typo of result.",
+  "expected_output": "total: 6"
+}

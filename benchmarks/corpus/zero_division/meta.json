@@ -1,0 +1,7 @@
+{
+  "id": "zero_division",
+  "name": "ZeroDivisionError",
+  "bug_type": "runtime_error",
+  "description": "Division by zero because the count is initialized to 0.",
+  "expected_output": "average: 5.0"
+}

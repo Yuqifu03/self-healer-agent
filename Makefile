@@ -1,10 +1,13 @@
-.PHONY: run test docker-build docker-run clean
+.PHONY: run test benchmark docker-build docker-run clean
 
 run:
-	python main.py
+	python -m autofix
 
 test:
 	python -m pytest -q
+
+benchmark:
+	python benchmarks/benchmark.py --smoke
 
 docker-build:
 	docker compose build

@@ -1,0 +1,7 @@
+{
+  "id": "import_mismatch",
+  "name": "Import name mismatch",
+  "bug_type": "import_error",
+  "description": "main.py imports compute_total but the module defines calculate_total.",
+  "expected_output": "Total: 6"
+}

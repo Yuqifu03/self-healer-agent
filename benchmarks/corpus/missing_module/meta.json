@@ -1,0 +1,7 @@
+{
+  "id": "missing_module",
+  "name": "Missing local module",
+  "bug_type": "import_error",
+  "description": "main.py imports a helper module that does not exist.",
+  "expected_output": "42"
+}

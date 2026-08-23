@@ -35,6 +35,24 @@ analyze_error ──> locate_code ──> propose_fix ──> apply_fix ──> 
 - **iteration guard** (`route_logic`): once `iteration_count` reaches
   `MAX_ITERATIONS`, the graph force-stops even if the bug is unresolved.
 
+The graph is built by `create_app(llm)` in `agent/workflow.py`, which takes a
+`BaseLLM` instead of hardcoding a vendor, and records every thought, action,
+and observation into a structured `trace` list on the state for later report
+generation.
+
+## 2.1 LLM provider layer
+
+`llm/base.py` defines the provider contract (`invoke`, `bind_tools`, `stats`)
+and `LLMStats` for token/cost accounting. `llm/gemini.py` implements it with:
+
+- tool binding via `langchain-google-genai`;
+- exponential-backoff retries (`invoke_with_retry`) for transient failures such
+  as rate limits and 5xx errors, with configurable attempts/base delay;
+- usage extraction from `usage_metadata` and per-1M-token cost estimation.
+
+`llm/factory.py` is the only place that decides which provider to construct, so
+adding e.g. an OpenAI provider means adding a class and a factory branch.
+
 ## 3. Tool discipline ("perception-first")
 
 The tool set is intentionally small:
@@ -106,6 +124,30 @@ repair a host-side project while the container provides isolation and
 reproducibility. `PROJECT_ROOT` defaults to the bundled `buggy_project` demo
 inside the container.
 
+## 7.1 CLI, runner, and repair reports
+
+`autofix/cli.py` parses arguments (`--project`, `--max-iterations`,
+`--report`, …), validates the API key, and delegates to
+`autofix/runner.py:run_repair()`. The runner:
+
+1. snapshots the target directory before the run;
+2. invokes the compiled graph;
+3. diffs the snapshot against the post-run state with `difflib`;
+4. collects the trace, LLM stats, and final status into a `RunResult`.
+
+`autofix/report.py` renders `RunResult` as a Markdown report (summary table,
+per-file diffs, final message, and the thought/action/observation trace) or as
+structured JSON under `reports/`.
+
+## 7.2 Benchmark
+
+`benchmarks/benchmark.py` loads `benchmarks/corpus/*/meta.json`, runs the agent
+against each injected-bug project, and independently verifies the fix by
+re-running `main.py` and checking the expected output — so logic bugs that exit
+0 are still caught. It reports per-case status plus aggregate success rate and
+writes `reports/benchmark_<timestamp>.{json,md}`. `--smoke` runs the same
+pipeline with a deterministic `FakeLLM` for CI without API calls.
+
 ## 8. Extension points
 
 - **New tools**: register functions in the `tools` list in `agent/workflow.py`;
@@ -114,3 +156,7 @@ inside the container.
   `agent/prompts.py`, and extend `phase_map` in `agent/workflow.py`.
 - **New sandboxes**: set `PROJECT_ROOT` to any directory; containment is
   enforced uniformly.
+- **New LLM providers**: implement `BaseLLM` and register it in
+  `llm/factory.py`.
+- **New corpus cases**: add a folder under `benchmarks/corpus/` with a
+  `project/` directory and a `meta.json` (bug type + expected output).

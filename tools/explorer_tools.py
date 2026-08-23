@@ -4,11 +4,9 @@ import subprocess
 from config import config
 from utils.sandbox import check_path as _check_path_impl, resolve_sandbox_root
 
-BASE_DIR = resolve_sandbox_root(config.PROJECT_ROOT)
-
 def _check_path(path: str) -> str:
     """Resolve a path relative to the sandbox root, rejecting escapes."""
-    return _check_path_impl(BASE_DIR, path)
+    return _check_path_impl(resolve_sandbox_root(config.PROJECT_ROOT), path)
 
 def list_files(path: str = ".", recursive: bool = False) -> str:
     """List files in the specified directory. Set recursive=True to see all subdirectories."""
@@ -36,7 +34,8 @@ def find_file(name: str, path: str = ".") -> str:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
         
         if result.stdout:
-            paths = [os.path.relpath(p, BASE_DIR) for p in result.stdout.strip().split('\n')]
+            sandbox_root = resolve_sandbox_root(config.PROJECT_ROOT)
+            paths = [os.path.relpath(p, sandbox_root) for p in result.stdout.strip().split('\n')]
             return "\n".join(paths)
         return f"No files found matching '{name}'."
     except Exception as e:

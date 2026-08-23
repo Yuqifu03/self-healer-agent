@@ -1,0 +1,7 @@
+{
+  "id": "type_error_concat",
+  "name": "TypeError string + int",
+  "bug_type": "runtime_error",
+  "description": "Concatenating a string with an integer raises TypeError.",
+  "expected_output": "total: 3 items"
+}

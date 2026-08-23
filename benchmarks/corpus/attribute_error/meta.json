@@ -1,0 +1,7 @@
+{
+  "id": "attribute_error",
+  "name": "AttributeError on str method",
+  "bug_type": "runtime_error",
+  "description": "Calls the non-existent str method uppercase() instead of upper().",
+  "expected_output": "AUTOFIX"
+}

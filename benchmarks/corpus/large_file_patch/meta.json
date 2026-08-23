@@ -1,0 +1,7 @@
+{
+  "id": "large_file_patch",
+  "name": "Bug in 80-line file",
+  "bug_type": "large_file_patch",
+  "description": "A bug hides near the end of a file larger than the 50-line rewrite threshold, forcing a precise literal patch.",
+  "expected_output": "total: 7"
+}

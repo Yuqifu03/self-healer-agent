@@ -1,0 +1,7 @@
+{
+  "id": "logic_error_mean",
+  "name": "Mean returns sum",
+  "bug_type": "logic_error",
+  "description": "mean() returns the sum instead of the average; the script exits 0, so only output verification catches it.",
+  "expected_output": "mean: 25.0"
+}

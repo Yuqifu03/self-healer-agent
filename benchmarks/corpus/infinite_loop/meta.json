@@ -1,0 +1,8 @@
+{
+  "id": "infinite_loop",
+  "name": "Infinite loop (timeout)",
+  "bug_type": "timeout",
+  "description": "Loop counter is never incremented, so execution hangs until the timeout guard fires.",
+  "expected_output": "done: 10",
+  "exec_timeout": 3
+}

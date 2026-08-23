@@ -1,0 +1,7 @@
+{
+  "id": "wrong_return_type",
+  "name": "String returned for arithmetic",
+  "bug_type": "runtime_error",
+  "description": "get_value returns a string; multiplying it by 2 repeats it instead of doubling the number.",
+  "expected_output": "double: 20"
+}

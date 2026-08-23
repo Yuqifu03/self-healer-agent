@@ -1,5 +1,3 @@
-"""Entry point kept for backwards compatibility: `python main.py`."""
-
 import sys
 
 from autofix.cli import main

@@ -72,6 +72,26 @@ The project ships with a `Dockerfile` and `docker-compose.yml`, so the agent can
 run against an arbitrary buggy codebase in a clean, reproducible container and
 re-verify fixes by re-running the target script.
 
+### CLI & repair artifacts
+
+`python -m autofix` (or the `autofix` console script) turns the agent into a
+tool: point it at any project, cap iterations, and it writes a **repair report**
+— files changed with diffs, per-phase thought/action/observation trace, LLM
+token usage and estimated cost — as Markdown or JSON under `reports/`.
+
+### Measurable evaluation
+
+[`benchmarks/benchmark.py`](benchmarks/benchmark.py) runs the agent over an
+injected-bug corpus (import errors, syntax errors, logic errors, timeouts,
+large-file patches, …), verifies each fix by re-running the target script, and
+reports success rate, iterations, and duration.
+
+### Provider-agnostic LLM layer
+
+All model access goes through a `BaseLLM` interface (`llm/`) with a Gemini
+implementation that adds exponential-backoff retries and per-run token/cost
+statistics. Swapping providers is a factory-level change.
+
 ---
 
 ## 🚀 Quick Start
@@ -99,17 +119,41 @@ pip install -r requirements.txt
 
 ### 4. Run
 
-Place a buggy Python project inside `sandbox/` (see
+Place a buggy Python project anywhere (see
 [`sandbox/buggy_project`](sandbox/buggy_project/README.md) for a ready-made
-demo), point `PROJECT_ROOT` at it, then:
+demo), then point the CLI at it:
 
 ```bash
-python main.py
+python -m autofix --project sandbox/buggy_project --report reports/repair.md
 ```
 
 The agent will explore the project, run its `main.py`, diagnose the failure,
 apply a fix, and re-run until the program produces clean `STDOUT` (or the
-iteration cap is reached).
+iteration cap is reached). A repair report with diffs and the full trace is
+written to the path given by `--report`.
+
+### CLI reference
+
+```text
+usage: autofix [-h] [--project PROJECT] [--task TASK] [--max-iterations N]
+               [--model MODEL] [--exec-timeout SECONDS]
+               [--report PATH] [--report-format {md,json}] [--no-report]
+               [--version]
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--project` | `config.PROJECT_ROOT` | Sandbox project to repair |
+| `--task` | run & fix errors | Task given to the agent |
+| `--max-iterations` | `10` | Hard cap on workflow iterations |
+| `--model` | config | Override the LLM model name |
+| `--exec-timeout` | config | Per-subprocess timeout in seconds |
+| `--report` | `reports/repair_<ts>.md` | Report path; format follows extension |
+| `--report-format` | inferred | Force `md` or `json` |
+| `--no-report` | off | Skip writing the report artifact |
+
+After `pip install -e .`, the same interface is available as the `autofix`
+console command.
 
 ### Running with Docker
 
@@ -127,13 +171,24 @@ the `buggy_project` demo by default.
 
 ```text
 .
+├── autofix/
+│   ├── cli.py              # command-line interface
+│   ├── runner.py           # repair execution + snapshot diffing
+│   └── report.py           # Markdown/JSON report artifacts
 ├── agent/
 │   ├── workflow.py        # LangGraph state machine & phase routing
 │   └── prompts.py         # Phase-specific system prompts
+├── llm/
+│   ├── base.py            # BaseLLM interface, retry helper, usage stats
+│   ├── gemini.py          # Gemini provider with retries & cost tracking
+│   └── factory.py         # provider factory (extension point)
 ├── tools/
 │   ├── explorer_tools.py  # list_files, find_file, grep_text, read_header
 │   ├── editor_tools.py    # write_file, patch_file, insert_line
 │   └── executor_tools.py  # run_python_script (bounded by EXEC_TIMEOUT)
+├── benchmarks/
+│   ├── benchmark.py       # batch evaluation runner
+│   └── corpus/            # injected-bug mini projects with meta.json
 ├── utils/
 │   ├── sandbox.py         # path-level containment checks (security core)
 │   └── logger.py          # thought/action/observation console + file logging
@@ -145,23 +200,56 @@ the `buggy_project` demo by default.
 │   └── ARCHITECTURE.md    # deep-dive design document
 ├── config.py              # env-driven configuration
 ├── state.py               # LangGraph state schema (AgentState)
-├── main.py                # entry point
+├── main.py                # legacy entry point (delegates to autofix CLI)
 ├── Dockerfile
 ├── docker-compose.yml
 ├── Makefile
-└── requirements.txt
+└── LICENSE
 ```
+
+## 📊 Benchmark
+
+The corpus in `benchmarks/corpus/` contains one mini project per injected
+defect, each with a `meta.json` describing the bug type and expected output.
+
+| Bug type | Cases |
+| --- | ---: |
+| Import error | `import_mismatch`, `missing_module` |
+| Syntax error | `syntax_error` |
+| Runtime error | `zero_division`, `type_error_concat`, `attribute_error`, `undefined_name`, `wrong_return_type` |
+| Logic error (exit 0, wrong output) | `logic_error_mean`, `off_by_one_logic` |
+| Timeout guard | `infinite_loop` |
+| Large-file literal patch | `large_file_patch` |
+
+Run the benchmark (requires the API key):
+
+```bash
+python benchmarks/benchmark.py                 # full corpus
+python benchmarks/benchmark.py --limit 3       # quick subset
+python benchmarks/benchmark.py --smoke         # plumbing check, no API calls
+```
+
+Results are printed per case and written to `reports/benchmark_<timestamp>.{json,md}`.
+After a real run, copy the Markdown table here to keep a public record:
+
+| Case | Bug type | Agent status | Iterations | Duration (s) | Passed |
+| --- | --- | --- | ---: | ---: | --- |
+| _pending first run_ | | | | | |
 
 ## ⚙️ Configuration
 
 | Variable | Default | Description |
 | --- | --- | --- |
 | `GOOGLE_API_KEY` | — | Gemini API key (required) |
-| `PROJECT_ROOT` | `./sandbox/example_project` | Sandbox root the agent may read/write |
-| `EXEC_TIMEOUT` | `30` | Per-subprocess execution timeout (seconds) |
+| `LLM_PROVIDER` | `gemini` | Reasoning provider (factory extension point) |
 | `MODEL_NAME` | `gemini-2.5-flash` | LLM used for reasoning |
 | `TEMPERATURE` | `0` | Sampling temperature |
+| `PROJECT_ROOT` | `./sandbox/example_project` | Sandbox root the agent may read/write |
+| `EXEC_TIMEOUT` | `30` | Per-subprocess execution timeout (seconds) |
 | `MAX_ITERATIONS` | `10` | Hard cap on workflow iterations |
+| `LLM_MAX_RETRIES` | `3` | LLM retry attempts on transient failures |
+| `LLM_RETRY_BASE_DELAY` | `1.0` | Backoff base delay (seconds) |
+| `REPORTS_DIR` | `reports` | Directory for repair/benchmark artifacts |
 
 ## 🔒 Security Design
 
@@ -195,4 +283,4 @@ machine, tool discipline, security model, and extension points.
 
 ## 📄 License
 
-TBD — MIT (pending).
+MIT — see [LICENSE](LICENSE).

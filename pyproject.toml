@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "autofix-agent"
-version = "0.1.0"
+version = "0.2.0"
 description = "Autonomous codebase self-healing agent built with LangGraph and Gemini"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -15,6 +15,9 @@ dependencies = [
     "python-dotenv",
     "colorama",
 ]
+
+[project.scripts]
+autofix = "autofix.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
